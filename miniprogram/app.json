@@ -1,5 +1,7 @@
 {
+  "entryPagePath": "pages/weui-demo/index",
   "pages": [
+    "pages/weui-demo/index",
     "pages/index/index",
     "pages/logs/logs"
   ],
@@ -13,10 +15,14 @@
       "defaultDisplayBlock": true,
       "disableABTest": true,
       "sdkVersionBegin": "3.0.0",
-      "sdkVersionEnd": "15.255.255"
+      "sdkVersionEnd": "15.255.255",
+      "enableScrollViewAutoSize": true
     }
   },
   "componentFramework": "glass-easel",
   "sitemapLocation": "sitemap.json",
-  "lazyCodeLoading": "requiredComponents"
+  "lazyCodeLoading": "requiredComponents",
+  "useExtendedLib": {
+    "weui": true
+  }
 }

@@ -3,5 +3,6 @@
   "projectname": "mini-natvie-dev",
   "setting": {
     "compileHotReLoad": true
-  }
+  },
+  "libVersion": "3.8.0"
 }

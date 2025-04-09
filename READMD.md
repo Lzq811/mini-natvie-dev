@@ -91,3 +91,17 @@
    每个组件可以设置`ext-class`这个属性，该属性提供设置在组件WXML顶部元素的class，组件的[addGlobalClass](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/wxml-wxss.html#组件样式隔离)的options都设置为true，所以可以在页面设置wxss样式来覆盖组件的内部样式。需要注意的是，如果要覆盖组件内部样式，必须wxss的样式选择器的优先级比组件内部样式优先级高。 `addGlobalClass`在基础库2.2.3开始支持
 
 4. 适配 DarkMode
+
+
+
+##### 6. 使用 vscode 接管代码编译
+
+​	目前并无完全替代的拓展或工具， 可以直接使用 vscode 打开代码进行编码。微信开发工具同步更新代码。
+
+​	**自动格式化** shift + alt + f
+
+​	vscode -- 设置 -- 用户 -- 文本编辑器 -- 格式化 -- format on save 
+
+​	然后 ctrl + s 即可自动格式。
+
+​	

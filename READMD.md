@@ -1,113 +1,178 @@
-### 微信小程序原生开发
+### 找项目进行模拟开发
 
-##### 1. 小程序开发平台注册
-##### 2. 开发工具安装
-##### 3. 使用 ts+less 模板生成模版文件
+##### 1. 找项目
 
-​	是用改模板则对应 page 下的 四个文件的 拓展名 `.less`  `.ts` `.wxml` `.json`。
+##### 2. 删除一些不用的默认代码
 
-​	`app.json` 内看出默认适配了 `skyline` 模式。
+##### 3. 默认样式
 
-##### 4. 使用 UI 组件库
+1. 默认 page 页面样式
 
-- **Vant Weapp**
-  - 组件丰富（60+），覆盖表单、导航、数据展示等常见场景。
-  - 支持 **主题定制** 和 **TypeScript**，文档清晰。
-  - 社区活跃，维护稳定。
-  - 电商、后台管理系统等需要高频交互的项目。
-- **WeUI（微信官方）** --- 这里使用 ***weui + 内置组件***
-  - 微信原生视觉风格，轻量无依赖。
-  - 纯 CSS 组件（无 JS 逻辑），需自行绑定事件。
-  - 需要与微信风格高度一致的基础项目。
-  - 文档：https://wechat-miniprogram.github.io/weui/docs/
-- **Wux Weapp**
-  - 提供复杂交互组件（如抽屉、手风琴、日历）。
-  - 支持自定义动画效果。
-  - 需要高级交互（如拖拽、动态表单）的场景。
+   1. 安全区域 -- 使用js脚本实现
 
-##### 5. **WEUI**的使用
+      1. 设置 save-area 变量
 
-​	样式在线预览：https://developers.weixin.qq.com/miniprogram/dev/platform-capabilities/extended/weui/#%E5%9C%A8%E7%BA%BF%E9%A2%84%E8%A7%88
+         ```tsx
+         // app.ts 
+         globalData: {
+           saveArea: null
+         },
+         onLaunch() {
+           /**
+             * 获取和设置 save area。 仅在进入小程序时候计算一次即可。
+             * 在竖屏正方向下的安全区域。部分机型没有安全区域概念，也不会返回 safeArea 字段，开发者需自行兼容。
+             * 自定义一个 save area 组件。在每个 page 里面调用。
+             */
+           const systemInfo = wx.getWindowInfo()
+           this.globalData.saveArea = systemInfo.safeArea || {
+             top: 47, // 默认值（单位：px）
+             bottom: 810,
+             left: 0,
+             right: 0
+           }
+         }
+         ```
 
-1.  引入组件（选择方式1）
+         
 
-   1. 通过 [useExtendedLib 扩展库](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/app.html#useExtendedLib) 的方式引入，这种方式引入的组件将不会计入代码包大小。
+      2. 使用
 
-      在app.json文件下录入
+         ```tsx
+         Page({
+           data: {
+             safeArea: app.globalData.saveArea
+           }
+         })
+         ```
 
-      ```json
-      {
-        "useExtendedLib": {
-          "kbone": true,
-          "weui": true
-        }
-      }
-      ```
+         ```vue
+         <view class="page-container" style="padding-top: {{safeArea.top}}px;">其他方向同理设置</view>
+         ```
 
+      3.  封装组件 Component
+
+         1.  记录安全信息数据
+
+            - 安全区域计算
+
+              - saveTop: 页面顶部非安全区域高度 = safeArea.top
+              - saveBottom: 页面底部非安全区域高度 = screenHeight - saveArea.bottom。 有可能为 0 ；
+              - saveHeight: 安全区域高度 = screenHeight - top - bottom= saveArea.height
+
+            - 把上面计算得出的数据放入 `globalData` 中。
+
+              ```js
+              // app.ts
+              onLaunch() {
+                const systemInfo = wx.getWindowInfo()
+                this.globalData.saveTop = systemInfo.safeArea.top
+                this.globalData.saveBottom = systemInfo.screenHeight - systemInfo.safeArea.bottom || 0
+                this.globalData.saveHeight = systemInfo.safeArea.height
+              }
+              ```
+
+            - 
+
+         2. 定义组件
+
+            1. 定义一个组件把页面顶部和底部非安全区域高度撑起来。
+
+               定义 `save-area` 组件，用来撑起 非安全区域高度
+
+               ```vue
+               # save-area/index.wxml
+               <view style="height: {{save}}px; background-color: aqua;"></view>
+               ```
+
+               ```tsx
+               # save-area/index.ts
+               const app = getApp()
+               type Data = {
+                 top: number
+                 bottom: number
+                 save: number
+               }
+               type Properties = {
+                 position: String | any
+               }
+               /**
+                * 在 app.json 中声明的自定义组件视为全局自定义组件
+                * 左右暂时不做。默认 0
+                * 全局自定义组件会视为被所有页面依赖，会在所有页面启动时进行初始化，影响启动性能且会占用主包大小。只被个别页面或分包引
+                */
+               Component<Data, Properties, any, any>({
+                 data: {
+                   top: app.globalData.saveTop,
+                   bottom: app.globalData.saveBottom,
+                   save: app.globalData.saveTop
+                 },
+                 properties: {
+                   position: 'top' // 默认top  top bottom 
+                 },
+                 attached() {
+                   this.setData({
+                     save: this.data.position === 'top' ? this.data.top : this.data.bottom
+                   })
+                 }
+               })
+               ```
+
+               ```json
+               # save-area/index.json
+               {
+                 "component": true
+               }
+               ```
+
+               
+
+            2. 把 上面定义 的 saveHeight 绑定在 视图组件上。
+
+               定义 `save-page` 组件，用来撑起整个页面框架。
+
+               ```vue
+               # save-page/index.wxml
+               <save-area position="top" />
+               <view class="save-page-container" style="height: {{saveHeight}}px">
+                 {{msg}}
+                 <slot></slot>
+               </view>
+               <save-area position="bottom" />
+               ```
+               
+               ```tsx
+               # save-page/index.ts
+               const app = getApp()
+               Component({
+                 data: {
+                   msg: 'hello world',
+                   saveHeight: app.globalData.saveHeight || 0
+                 }
+               })
+               ```
+         
+         3.  把定义的组件 `save-area` 和 `save-page` 在 `app.json`中。
+         
+            ```json
+            "usingComponents": {
+              "save-area": "components/save-area/index",
+              "save-page": "components/save-page/index"
+            }
+            ```
+         
+            
+         
+         4.  使用组件，在 对应的 `page` 中调用 `save-page`组件即可。
+         
+            ```vue
+            <save-page>
+            	hello world
+            </save-page>
+            ```
+         
+         5.  也可不使用 `save-page` 组件。在需要使用的 `page`中显式的调用 `save-area + saveHeight`。 
+      
       
 
-   2. 可以通过[npm](https://developers.weixin.qq.com/miniprogram/dev/devtools/npm.html)方式下载构建，npm包名为`weui-miniprogram`
+2.  默认 flex box样式
 
-2.  如何使用
-
-   首先要在 app.wxss 里面引入 weui.wxss，如果是通过 npm 引入，需要先构建 npm（“工具”菜单 --> “构建 npm”）
-
-   ```css
-   @import 'weui-miniprogram/weui-wxss/dist/style/weui.wxss';
-   ```
-
-   然后可以在页面中引入 dialog 弹窗组件:
-
-   1. 首先在页面的 json 文件加入 usingComponents 配置字段
-
-      ```json
-      {
-        "usingComponents": {
-          "mp-dialog": "weui-miniprogram/dialog/dialog"
-        }
-      }
-      ```
-
-   2. 然后可以在对应页面的 wxml 中直接使用该组件
-
-      ```vue
-      <mp-dialog title="test" show="{{true}}" bindbuttontap="tapDialogButton" buttons="{{buttons}}">
-          <view>test content</view>
-      </mp-dialog>
-      ```
-
-      ```js
-      Page({
-        data: {
-          buttons: [{text: '取消'}, {text: '确认'}]
-        }
-      })
-      ```
-
-      
-
-3. 修改组件内部样式
-
-   每个组件可以设置`ext-class`这个属性，该属性提供设置在组件WXML顶部元素的class，组件的[addGlobalClass](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/wxml-wxss.html#组件样式隔离)的options都设置为true，所以可以在页面设置wxss样式来覆盖组件的内部样式。需要注意的是，如果要覆盖组件内部样式，必须wxss的样式选择器的优先级比组件内部样式优先级高。 `addGlobalClass`在基础库2.2.3开始支持
-
-4. 适配 DarkMode
-
-
-
-##### 6. 使用 vscode 接管代码编译 -- 也可以不使用
-
-​	目前并无完全替代的拓展或工具， 可以直接使用 vscode 打开代码进行编码。微信开发工具同步更新代码。
-
-​	**自动格式化** shift + alt + f
-
-​	vscode -- 设置 -- 用户 -- 文本编辑器 -- 格式化 -- format on save 
-
-​	微信开发者工具 -- 左上角设置 -- 编辑器设置 --  更多编辑器设置（滚动到页面最下方）-- 用户 -- 文本编辑器 -- 格式化 -- format on save 
-
-​	然后 ctrl + s 即可自动格式。
-
-
-
-项目初始化结束...
-
-​	

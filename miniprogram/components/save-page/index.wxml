@@ -1,0 +1,5 @@
+<save-area position="top" />
+<view class="save-page-container" style="height: {{saveHeight}}px">
+  <slot></slot>
+</view>
+<save-area position="bottom" />
